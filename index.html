@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GIF Studio — Convert & Compress</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg:       #0a0a0f;
+    --surface:  #13131a;
+    --card:     #1a1a26;
+    --border:   #2a2a3d;
+    --accent:   #7c5cfc;
+    --accent2:  #fc5c7d;
+    --text:     #e8e8f0;
+    --muted:    #6b6b8a;
+    --success:  #5cfca0;
+    --radius:   14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  header {
+    padding: 36px 40px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  header span {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    background: rgba(124,92,252,0.12);
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 24px 40px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 12px 28px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .tab.active {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .panel { display: none; padding: 36px 40px; max-width: 900px; }
+  .panel.active { display: block; }
+
+  /* Drop Zone */
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 52px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: var(--card);
+    position: relative;
+  }
+
+  .dropzone:hover, .dropzone.drag-over {
+    border-color: var(--accent);
+    background: rgba(124,92,252,0.06);
+  }
+
+  .dropzone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+
+  .drop-icon { font-size: 2.8rem; margin-bottom: 14px; display: block; }
+  .drop-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 6px; }
+  .drop-sub { font-size: 0.82rem; color: var(--muted); }
+
+  /* Settings */
+  .settings {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .field input[type=range] {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .field-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent);
+    margin-top: 4px;
+    display: inline-block;
+  }
+
+  .field input[type=number], .field select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 9px 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.88rem;
+  }
+
+  .field input[type=number]:focus, .field select:focus {
+    outline: none; border-color: var(--accent);
+  }
+
+  /* Time range */
+  .time-range {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* Button */
+  .btn {
+    margin-top: 24px;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.01em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .btn:hover { opacity: 0.92; }
+  .btn:active { transform: scale(0.99); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Progress */
+  .progress-wrap {
+    margin-top: 20px;
+    display: none;
+  }
+
+  .progress-wrap.show { display: block; }
+
+  .progress-bar-bg {
+    background: var(--border);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width 0.3s;
+    width: 0%;
+  }
+
+  .progress-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Result */
+  .result-card {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: none;
+  }
+
+  .result-card.show { display: block; }
+
+  .result-preview {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .result-preview img {
+    max-width: 100%;
+    max-height: 320px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .result-meta {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+
+  .meta-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 0.78rem;
+  }
+
+  .meta-chip span {
+    color: var(--muted);
+    display: block;
+    font-size: 0.7rem;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .meta-chip strong {
+    font-family: 'Space Mono', monospace;
+    color: var(--success);
+  }
+
+  .dl-btn {
+    display: inline-block;
+    padding: 11px 28px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: opacity 0.2s;
+  }
+
+  .dl-btn:hover { opacity: 0.88; }
+
+  /* Video preview */
+  #video-preview-wrap { margin-top: 16px; display: none; }
+  #video-preview-wrap.show { display: block; }
+
+  video {
+    width: 100%;
+    max-height: 240px;
+    border-radius: 10px;
+    background: #000;
+    display: block;
+  }
+
+  .notice {
+    font-size: 0.8rem;
+    color: var(--muted);
+    background: rgba(124,92,252,0.07);
+    border: 1px solid rgba(124,92,252,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 14px;
+    line-height: 1.6;
+  }
+
+  .notice b { color: var(--accent); }
+
+  .error-msg {
+    color: var(--accent2);
+    font-size: 0.82rem;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .error-msg.show { display: block; }
+
+  /* Gif drop area */
+  #gif-result-preview { max-width: 100%; border-radius: 8px; margin-bottom: 12px; }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .section-sub {
+    font-size: 0.83rem;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 640px) {
+    header { padding: 24px 20px 18px; }
+    .tabs { padding: 16px 20px 0; }
+    .panel { padding: 24px 20px; }
+    .settings { grid-template-columns: 1fr; }
+    .time-range { grid-column: 1; grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">🎞</div>
+  <div>
+    <h1>GIF Studio <span>BROWSER-NATIVE</span></h1>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="convert">Video → GIF</div>
+  <div class="tab" data-tab="compress">GIF Compressor</div>
+</div>
+
+<!-- ═══════ PANEL 1: VIDEO → GIF ═══════ -->
+<div class="panel active" id="panel-convert">
+  <div class="section-title">Convert Video to GIF</div>
+  <div class="section-sub">MP4, WebM, MOV, AVI — processed entirely in your browser. No uploads, no servers.</div>
+
+  <div class="dropzone" id="video-dropzone">
+    <input type="file" id="video-input" accept="video/*">
+    <span class="drop-icon">🎬</span>
+    <div class="drop-title">Drop your video here</div>
+    <div class="drop-sub">or click to browse · MP4, WebM, MOV, AVI supported</div>
+  </div>
+
+  <div id="video-preview-wrap">
+    <video id="video-el" controls muted playsinline></video>
+  </div>
+
+  <div class="settings">
+    <div class="field">
+      <label>FPS</label>
+      <input type="range" id="fps" min="5" max="30" value="15" step="1">
+      <span class="field-val" id="fps-val">15 fps</span>
+    </div>
+    <div class="field">
+      <label>Width (px)</label>
+      <input type="number" id="width" value="480" min="100" max="1920" step="10">
+    </div>
+    <div class="field">
+      <label>Quality (1–10)</label>
+      <input type="range" id="quality" min="1" max="10" value="8" step="1">
+      <span class="field-val" id="quality-val">8</span>
+    </div>
+    <div class="field">
+      <label>Colors</label>
+      <select id="colors">
+        <option value="256">256 (max)</option>
+        <option value="128">128</option>
+        <option value="64">64</option>
+        <option value="32">32</option>
+      </select>
+    </div>
+    <div class="time-range">
+      <div class="field">
+        <label>Start (sec)</label>
+        <input type="number" id="start-time" value="0" min="0" step="0.5">
+      </div>
+      <div class="field">
+        <label>End (sec, 0 = full)</label>
+        <input type="number" id="end-time" value="0" min="0" step="0.5">
+      </div>
+    </div>
+  </div>
+
+  <div class="notice">
+    <b>How it works:</b> Frames are extracted via canvas at your chosen FPS, then encoded into a GIF using a pure-JS encoder — no server needed. Higher quality + more colors = larger file.
+  </div>
+
+  <button class="btn" id="convert-btn" disabled>Convert to GIF</button>
+
+  <div class="progress-wrap" id="convert-progress">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="convert-bar"></div></div>
+    <div class="progress-label" id="convert-label">Preparing…</div>
+  </div>
+
+  <div class="error-msg" id="convert-error"></div>
+
+  <div class="result-card" id="convert-result">
+    <div class="result-preview">
+      <img id="convert-preview-img" src="" alt="Output GIF">
+    </div>
+    <div class="result-meta">
+      <div class="meta-chip"><span>File size</span><strong id="convert-size">—</strong></div>
+      <div class="meta-chip"><span>Dimensions</span><strong id="convert-dims">—</strong></div>
+      <div class="meta-chip"><span>Frames</span><strong id="convert-frames">—</strong></div>
+    </div>
+    <a class="dl-btn" id="convert-dl" href="#" download="output.gif">⬇ Download GIF</a>
+  </div>
+</div>
+
+<!-- ═══════ PANEL 2: GIF COMPRESSOR ═══════ -->
+<div class="panel" id="panel-compress">
+  <div class="section-title">Compress GIF</div>
+  <div class="section-sub">Reduce GIF file size by skipping frames, reducing colors, and scaling down — all in-browser.</div>
+
+  <div class="dropzone" id="gif-dropzone">
+    <input type="file" id="gif-input" accept="image/gif">
+    <span class="drop-icon">🗜️</span>
+    <div class="drop-title">Drop your GIF here</div>
+    <div class="drop-sub">or click to browse · GIF files only</div>
+  </div>
+
+  <div class="settings">
+    <div class="field">
+      <label>Keep every Nth frame</label>
+      <input type="range" id="skip-frames" min="1" max="4" value="1" step="1">
+      <span class="field-val" id="skip-val">Keep every frame (1×)</span>
+    </div>
+    <div class="field">
+      <label>Scale (%)</label>
+      <input type="range" id="scale" min="25" max="100" value="100" step="5">
+      <span class="field-val" id="scale-val">100%</span>
+    </div>
+    <div class="field">
+      <label>Max Colors</label>
+      <select id="compress-colors">
+        <option value="256">256 (lossless)</option>
+        <option value="128">128</option>
+        <option value="64">64</option>
+        <option value="32">32</option>
+        <option value="16">16</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Output FPS cap</label>
+      <input type="number" id="compress-fps" value="0" min="0" max="60">
+      <span style="font-size:0.75rem;color:var(--muted);margin-top:4px;display:block">0 = keep original</span>
+    </div>
+  </div>
+
+  <button class="btn" id="compress-btn" disabled>Compress GIF</button>
+
+  <div class="progress-wrap" id="compress-progress">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="compress-bar"></div></div>
+    <div class="progress-label" id="compress-label">Decoding GIF…</div>
+  </div>
+
+  <div class="error-msg" id="compress-error"></div>
+
+  <div class="result-card" id="compress-result">
+    <div class="result-preview">
+      <img id="gif-result-preview" src="" alt="Compressed GIF">
+    </div>
+    <div class="result-meta">
+      <div class="meta-chip"><span>Original size</span><strong id="orig-size">—</strong></div>
+      <div class="meta-chip"><span>Compressed</span><strong id="comp-size">—</strong></div>
+      <div class="meta-chip"><span>Saved</span><strong id="saved-pct">—</strong></div>
+      <div class="meta-chip"><span>Frames</span><strong id="comp-frames">—</strong></div>
+    </div>
+    <a class="dl-btn" id="compress-dl" href="#" download="compressed.gif">⬇ Download Compressed GIF</a>
+  </div>
+</div>
+
+<!-- ═══════ GIF ENCODER (omggif + gifshot approach via pure JS) ═══════ -->
+<script>
+// ──────────────────────────────────────────────
+// Minimal GIF encoder (LZW + GIF89a spec)
+// ──────────────────────────────────────────────
+(function(root){
+"use strict";
+// ── Neuquant palette quantizer (adapted public domain)
+function NeuQuant(pixels, samplefac){
+  const NETSIZE=256,PRIME1=499,PRIME2=491,PRIME3=487,PRIME4=503;
+  const MINPICTUREPIX=Array.from({length:NETSIZE},(_,i)=>[0,0,0,i]);
+  const net=[...MINPICTUREPIX.map(a=>[...a])];
+  const netindex=new Int32Array(256);
+  const bias=new Int32Array(NETSIZE),freq=new Int32Array(NETSIZE).fill(1<<(Math.log2(NETSIZE)|0));
+  const INITRAD=NETSIZE>>3,RADIUSBIASSHIFT=6,RADIUSBIAS=1<<RADIUSBIASSHIFT;
+  const INITRADIUS=INITRAD*RADIUSBIAS;
+  const RADIUSDEC=30,ALPHABIASSHIFT=10,INITALPHA=1<<ALPHABIASSHIFT;
+  const RADBIASSHIFT=8,RADBIAS=1<<RADBIASSHIFT;
+  const ALPHARADBSHIFT=ALPHABIASSHIFT+RADBIASSHIFT,ALPHARADBIAS=1<<ALPHARADBSHIFT;
+  let alpha=INITALPHA;
+  const len=pixels.length;
+  const samplepixels=len/(3*samplefac)|0;
+  const delta=samplepixels/100|0;
+  let radius=INITRADIUS;
+  let rad=radius>>RADIUSBIASSHIFT;
+  const radpower=new Int32Array(NETSIZE>>3);
+  function contest(b,g,r){
+    let bestd=~(1<<31),bestbiasd=bestd,bestpos=-1,bestbiaspos=bestpos;
+    for(let i=0;i<NETSIZE;i++){
+      const n=net[i];
+      let dist=Math.abs(n[2]-b)+Math.abs(n[1]-g)+Math.abs(n[0]-r);
+      if(dist<bestd){bestd=dist;bestpos=i;}
+      const biasdist=dist-(bias[i]>>INITALPHA-ALPHABIASSHIFT);
+      if(biasdist<bestbiasd){bestbiasd=biasdist;bestbiaspos=i;}
+      freq[i]-=freq[i]>>4;bias[i]+=freq[i]<<NETSIZE-ALPHABIASSHIFT>>4;
+    }
+    freq[bestpos]+=1<<(Math.log2(NETSIZE)|0);
+    bias[bestpos]-=INITALPHA;
+    return bestbiaspos;
+  }
+  function alterSingle(alpha,i,b,g,r){
+    net[i][0]-=alpha*(net[i][0]-b)>>ALPHABIASSHIFT;
+    net[i][1]-=alpha*(net[i][1]-g)>>ALPHABIASSHIFT;
+    net[i][2]-=alpha*(net[i][2]-r)>>ALPHABIASSHIFT;
+  }
+  function alterNeigh(rad,i,b,g,r){
+    const lo=Math.max(i-rad,-1),hi=Math.min(i+rad,NETSIZE);
+    let j=i+1,k=i-1,m=1;
+    while(j<hi||k>lo){
+      const a=radpower[m++];
+      if(j<hi){const p=net[j++];p[0]-=a*(p[0]-b)>>ALPHARADBSHIFT;p[1]-=a*(p[1]-g)>>ALPHARADBSHIFT;p[2]-=a*(p[2]-r)>>ALPHARADBSHIFT;}
+      if(k>lo){const p=net[k--];p[0]-=a*(p[0]-b)>>ALPHARADBSHIFT;p[1]-=a*(p[1]-g)>>ALPHARADBSHIFT;p[2]-=a*(p[2]-r)>>ALPHARADBSHIFT;}
+    }
+  }
+  function learn(){
+    let pix=0;
+    for(let i=0;i<samplepixels;i++){
+      const b=pixels[pix]&0xff,g=pixels[pix+1]&0xff,r=pixels[pix+2]&0xff;
+      const idx=contest(b,g,r);
+      alterSingle(alpha,idx,b,g,r);
+      if(rad>0)alterNeigh(rad,idx,b,g,r);
+      pix+=3*samplefac;
+      if(pix>=len)pix=0;
+      if(!(i%delta)){alpha-=alpha/3000;radius-=radius/30;rad=radius>>RADIUSBIASSHIFT;if(rad<=1)rad=0;for(let j=0;j<rad;j++)radpower[j]=alpha*((rad*rad-j*j)*RADBIAS/(rad*rad));}
+    }
+  }
+  function buildIndex(){
+    const previouscol=new Int32Array(NETSIZE);
+    const startpos=new Int32Array(NETSIZE);
+    for(let i=0;i<NETSIZE;i++){let j=net[i][3];net[i][3]=i;startpos[j]=i;}
+    let smallpos=0,smallval=NETSIZE;
+    for(let i=0;i<NETSIZE;i++){
+      const p=startpos[i];
+      let j=p,jc=net[j][1];
+      for(let k=p+1;k<NETSIZE;k++){if(net[k][1]<jc){j=k;jc=net[k][1];}}
+      net[j][3]=startpos[i];if(j!=p){const tmp=net[j];net[j]=net[p];net[p]=tmp;}
+      netindex[jc]=i;if(previouscol[i]!=0)for(let k=smallpos;k<i;k++)netindex[jc+previouscol[k]]=k;
+      previouscol[i]=jc;smallpos=i;
+      if(jc<smallval)smallval=jc;
+    }
+    for(let k=smallpos;k<NETSIZE;k++)netindex[jc+previouscol[k]]=k;
+  }
+  this.buildColormap=function(){learn();buildIndex();};
+  this.getColormap=function(){
+    const map=new Uint8Array(NETSIZE*3);
+    for(let i=0;i<NETSIZE;i++){map[i*3]=net[i][0];map[i*3+1]=net[i][1];map[i*3+2]=net[i][2];}
+    return map;
+  };
+  this.map=function(b,g,r){
+    let bestd=1000,best=-1;
+    let i=netindex[g]-1;
+    let j=i+1;
+    while(i>=0||j<NETSIZE){
+      if(i>=0){const p=net[i];let dist=p[1]-g;if(dist>=bestd)i=-1;else{i--;dist=Math.abs(dist)+Math.abs(p[0]-b);if(dist<bestd){dist+=Math.abs(p[2]-r);if(dist<bestd){bestd=dist;best=p[3];}}}}
+      if(j<NETSIZE){const p=net[j];let dist=g-p[1];if(dist>=bestd)j=NETSIZE;else{j++;dist=Math.abs(dist)+Math.abs(p[0]-b);if(dist<bestd){dist+=Math.abs(p[2]-r);if(dist<bestd){bestd=dist;best=p[3];}}}}
+    }
+    return best;
+  };
+}
+
+// ── LZW encoder
+function lzwEncode(width,height,pixels,colorDepth){
+  const clearCode=1<<colorDepth,eofCode=clearCode+1;
+  let codeSize=colorDepth+1,maxCode=1<<codeSize;
+  const buf=[];
+  let curBit=0,curByte=0,bitBuf=0;
+  function writeBits(v,n){bitBuf|=v<<curBit;curBit+=n;while(curBit>=8){buf.push(bitBuf&0xff);bitBuf>>=8;curBit-=8;}}
+  const table={};
+  function resetTable(){Object.keys(table).forEach(k=>delete table[k]);for(let i=0;i<clearCode;i++)table[i+',']=-i-1;codeSize=colorDepth+1;maxCode=1<<codeSize;}
+  function output(code){writeBits(code,codeSize);if(++nextCode>maxCode){if(codeSize<12){codeSize++;maxCode<<=1;}else{writeBits(clearCode,codeSize);resetTable();nextCode=clearCode+2;}}}
+  let nextCode=clearCode+2;
+  resetTable();
+  writeBits(clearCode,codeSize);
+  let str=pixels[0]+',';
+  for(let i=1;i<pixels.length;i++){
+    const px=pixels[i];
+    const next=str+px+',';
+    if(next in table){str=next;}
+    else{const c=table[str];if(c<0)output(-c-1);else output(c);table[next]=nextCode++;str=px+',';}
+  }
+  const c=table[str];if(c<0)output(-c-1);else output(c);
+  writeBits(eofCode,codeSize);
+  if(curBit>0)buf.push(bitBuf&0xff);
+  return buf;
+}
+
+// ── GIF encoder class
+class GIFEncoder {
+  constructor(width,height){
+    this.width=width;this.height=height;
+    this.frames=[];this.delay=10;this.repeat=0;this.colorDepth=8;
+    this.sampleInterval=10;
+  }
+  setDelay(ms){this.delay=Math.round(ms/10);}
+  setRepeat(n){this.repeat=n;}
+  setQuality(q){this.sampleInterval=Math.max(1,q);}
+  addFrame(imageData){
+    const pixels=new Uint8Array(this.width*this.height*3);
+    for(let i=0;i<this.width*this.height;i++){pixels[i*3]=imageData[i*4];pixels[i*3+1]=imageData[i*4+1];pixels[i*3+2]=imageData[i*4+2];}
+    const nq=new NeuQuant(pixels,this.sampleInterval);
+    nq.buildColormap();
+    const palette=nq.getColormap();
+    const indices=new Uint8Array(this.width*this.height);
+    for(let i=0;i<this.width*this.height;i++)indices[i]=nq.map(pixels[i*3],pixels[i*3+1],pixels[i*3+2]);
+    this.frames.push({indices,palette,delay:this.delay});
+  }
+  finish(){
+    const out=[];
+    const w=this.width,h=this.height;
+    // Header
+    out.push(71,73,70,56,57,97);
+    // Logical screen
+    out.push(w&0xff,w>>8,h&0xff,h>>8,0x00,0,0);
+    // Netscape loop extension
+    out.push(0x21,0xff,11,78,69,84,83,67,65,80,69,50,46,48,3,1,this.repeat&0xff,(this.repeat>>8)&0xff,0);
+    for(const f of this.frames){
+      // Graphic control ext (delay)
+      out.push(0x21,0xf9,4,0,f.delay&0xff,(f.delay>>8)&0xff,0,0);
+      // Image descriptor with local color table
+      out.push(0x2c,0,0,0,0,w&0xff,w>>8,h&0xff,h>>8,0x87);
+      // Local color table (256 colors)
+      for(let i=0;i<256;i++){if(i<256&&i*3+2<f.palette.length){out.push(f.palette[i*3],f.palette[i*3+1],f.palette[i*3+2]);}else out.push(0,0,0);}
+      // Image data
+      const lzw=lzwEncode(w,h,f.indices,8);
+      out.push(8);
+      for(let i=0;i<lzw.length;i+=255){
+        const chunk=lzw.slice(i,i+255);
+        out.push(chunk.length,...chunk);
+      }
+      out.push(0);
+    }
+    out.push(0x3b);
+    return new Uint8Array(out);
+  }
+}
+root.GIFEncoder=GIFEncoder;
+})(window);
+</script>
+
+<!-- GIF DECODER (for compressor) -->
+<script>
+// Minimal GIF decoder (parses GIF89a frames)
+class GIFDecoder {
+  decode(buffer) {
+    this.buf = new Uint8Array(buffer);
+    this.pos = 0;
+    this.frames = [];
+    this.readHeader();
+    this.readLogicalScreen();
+    this.readExtensionsAndImages();
+    return { width: this.lsdW, height: this.lsdH, frames: this.frames };
+  }
+  byte() { return this.buf[this.pos++]; }
+  word() { const l=this.byte(),h=this.byte(); return l|(h<<8); }
+  readHeader() { this.pos+=6; }
+  readLogicalScreen() {
+    this.lsdW=this.word(); this.lsdH=this.word();
+    const packed=this.byte(); this.byte(); this.byte();
+    this.gctFlag=!!(packed>>7);
+    this.gctSize=1<<((packed&7)+1);
+    this.gct=null;
+    if(this.gctFlag){this.gct=this.readColorTable(this.gctSize);}
+  }
+  readColorTable(size){
+    const ct=[];
+    for(let i=0;i<size;i++)ct.push([this.byte(),this.byte(),this.byte()]);
+    return ct;
+  }
+  readExtensionsAndImages(){
+    let running=true;
+    let delay=100,transparent=-1;
+    while(running){
+      const block=this.byte();
+      if(block===0x21){
+        const label=this.byte();
+        if(label===0xf9){
+          this.byte(); // block size = 4
+          const packed=this.byte();
+          delay=this.word()*10; // ms
+          transparent=this.byte();
+          if(!(packed&1))transparent=-1;
+          this.byte(); // terminator
+        } else {
+          this.skipSubBlocks();
+        }
+      } else if(block===0x2c){
+        const frame=this.readImage(delay,transparent);
+        this.frames.push(frame);
+        delay=100;transparent=-1;
+      } else if(block===0x3b||block===undefined){
+        running=false;
+      } else {
+        this.skipSubBlocks();
+      }
+    }
+  }
+  skipSubBlocks(){
+    let size;
+    while((size=this.byte())!==0)this.pos+=size;
+  }
+  readImage(delay,transparent){
+    const x=this.word(),y=this.word(),w=this.word(),h=this.word();
+    const packed=this.byte();
+    const lctFlag=!!(packed>>7),interlace=!!(packed>>6&1);
+    const lctSize=1<<((packed&7)+1);
+    let ct=this.gct;
+    if(lctFlag)ct=this.readColorTable(lctSize);
+    const minCode=this.byte();
+    const lzwData=this.readSubBlocks();
+    const pixels=this.lzwDecode(lzwData,minCode);
+    const rgba=new Uint8ClampedArray(w*h*4);
+    for(let i=0;i<pixels.length;i++){
+      const idx=pixels[i];
+      const c=ct&&ct[idx]?ct[idx]:[0,0,0];
+      rgba[i*4]=c[0];rgba[i*4+1]=c[1];rgba[i*4+2]=c[2];
+      rgba[i*4+3]=(idx===transparent?0:255);
+    }
+    return {x,y,width:w,height:h,delay:delay||100,pixels:rgba,interlace};
+  }
+  readSubBlocks(){
+    const out=[];
+    let size;
+    while((size=this.byte())!==0)for(let i=0;i<size;i++)out.push(this.buf[this.pos++]);
+    return new Uint8Array(out);
+  }
+  lzwDecode(data,minCode){
+    const clear=1<<minCode,eof=clear+1;
+    let codeSize=minCode+1,mask=(1<<codeSize)-1;
+    const table=[];
+    for(let i=0;i<clear;i++)table[i]=[i];
+    table[clear]=[];table[eof]=[];
+    let nextCode=eof+1;
+    const out=[];
+    let bitBuf=0,bitCount=0,p=0;
+    function readCode(){
+      while(bitCount<codeSize){bitBuf|=data[p++]<<bitCount;bitCount+=8;}
+      const code=bitBuf&mask;bitBuf>>=codeSize;bitCount-=codeSize;return code;
+    }
+    let prevCode=readCode();
+    if(prevCode===clear)prevCode=readCode();
+    out.push(...table[prevCode]);
+    while(true){
+      const code=readCode();
+      if(code===eof||p>data.length)break;
+      if(code===clear){codeSize=minCode+1;mask=(1<<codeSize)-1;table.length=eof+1;nextCode=eof+1;prevCode=readCode();out.push(...table[prevCode]);continue;}
+      let entry;
+      if(code<nextCode){entry=table[code];}
+      else{entry=[...table[prevCode],table[prevCode][0]];}
+      out.push(...entry);
+      table[nextCode++]=[...table[prevCode],entry[0]];
+      if(nextCode>=mask&&codeSize<12){codeSize++;mask=(1<<codeSize)-1;}
+      prevCode=code;
+    }
+    return new Uint8Array(out);
+  }
+}
+window.GIFDecoder=GIFDecoder;
+</script>
+
+<script>
+// ──────────────────────────────────────────────
+// TAB SWITCHING
+// ──────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab,.panel').forEach(el=>el.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+
+// ──────────────────────────────────────────────
+// DRAG OVER STYLING
+// ──────────────────────────────────────────────
+['video-dropzone','gif-dropzone'].forEach(id=>{
+  const dz=document.getElementById(id);
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');});
+});
+
+// ──────────────────────────────────────────────
+// RANGE SLIDERS
+// ──────────────────────────────────────────────
+const fps=document.getElementById('fps');
+const fpsVal=document.getElementById('fps-val');
+fps.addEventListener('input',()=>fpsVal.textContent=fps.value+' fps');
+
+const quality=document.getElementById('quality');
+const qualVal=document.getElementById('quality-val');
+quality.addEventListener('input',()=>qualVal.textContent=quality.value);
+
+const skip=document.getElementById('skip-frames');
+const skipVal=document.getElementById('skip-val');
+skip.addEventListener('input',()=>{
+  const n=parseInt(skip.value);
+  skipVal.textContent=n===1?'Keep every frame (1×)':`Keep every ${n}th frame`;
+});
+
+const scale=document.getElementById('scale');
+const scaleVal=document.getElementById('scale-val');
+scale.addEventListener('input',()=>scaleVal.textContent=scale.value+'%');
+
+// ──────────────────────────────────────────────
+// UTILS
+// ──────────────────────────────────────────────
+function fmtSize(bytes){
+  if(bytes<1024)return bytes+'B';
+  if(bytes<1048576)return (bytes/1024).toFixed(1)+'KB';
+  return (bytes/1048576).toFixed(2)+'MB';
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ──────────────────────────────────────────────
+// VIDEO → GIF
+// ──────────────────────────────────────────────
+let videoFile=null;
+const videoInput=document.getElementById('video-input');
+const videoEl=document.getElementById('video-el');
+const convertBtn=document.getElementById('convert-btn');
+const convertProgress=document.getElementById('convert-progress');
+const convertBar=document.getElementById('convert-bar');
+const convertLabel=document.getElementById('convert-label');
+const convertResult=document.getElementById('convert-result');
+const convertError=document.getElementById('convert-error');
+
+videoInput.addEventListener('change',handleVideoFile);
+document.getElementById('video-dropzone').addEventListener('drop',e=>{
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('video/'))handleVideoFile(null,f);
+});
+
+function handleVideoFile(e,file){
+  videoFile=file||e.target.files[0];
+  if(!videoFile)return;
+  const url=URL.createObjectURL(videoFile);
+  videoEl.src=url;
+  document.getElementById('video-preview-wrap').classList.add('show');
+  convertBtn.disabled=false;
+  convertResult.classList.remove('show');
+  convertError.classList.remove('show');
+}
+
+convertBtn.addEventListener('click',async()=>{
+  if(!videoFile)return;
+  convertBtn.disabled=true;
+  convertProgress.classList.add('show');
+  convertResult.classList.remove('show');
+  convertError.classList.remove('show');
+
+  try{
+    const fpsVal=parseInt(fps.value);
+    const targetW=parseInt(document.getElementById('width').value);
+    const qualityVal=parseInt(quality.value);
+    const startSec=parseFloat(document.getElementById('start-time').value)||0;
+    const endSecInput=parseFloat(document.getElementById('end-time').value)||0;
+    const colors=parseInt(document.getElementById('colors').value);
+
+    await new Promise((res,rej)=>{
+      videoEl.onloadedmetadata=()=>res();
+      videoEl.onerror=()=>rej(new Error('Video load failed'));
+      if(videoEl.readyState>=1)res();
+    });
+
+    const duration=videoEl.duration;
+    const endSec=endSecInput>0?Math.min(endSecInput,duration):duration;
+    const clipLen=endSec-startSec;
+    const totalFrames=Math.floor(clipLen*fpsVal);
+
+    if(totalFrames<1)throw new Error('Clip too short for chosen FPS.');
+    if(totalFrames>500)throw new Error(`Too many frames (${totalFrames}). Reduce FPS or shorten clip.`);
+
+    const aspect=videoEl.videoHeight/videoEl.videoWidth;
+    const outW=Math.min(targetW,videoEl.videoWidth);
+    const outH=Math.round(outW*aspect)%2===0?Math.round(outW*aspect):Math.round(outW*aspect)+1;
+
+    const canvas=document.createElement('canvas');
+    canvas.width=outW; canvas.height=outH;
+    const ctx=canvas.getContext('2d');
+
+    const encoder=new GIFEncoder(outW,outH);
+    encoder.setRepeat(0);
+    encoder.setDelay(Math.round(1000/fpsVal));
+    encoder.setQuality(Math.max(1,11-qualityVal));
+
+    const frames=[];
+    for(let i=0;i<totalFrames;i++){
+      const t=startSec+(i/fpsVal);
+      frames.push(t);
+    }
+
+    convertLabel.textContent=`Extracting ${totalFrames} frames…`;
+    let done=0;
+
+    for(const t of frames){
+      await new Promise((res,rej)=>{
+        videoEl.currentTime=t;
+        videoEl.onseeked=()=>{
+          ctx.drawImage(videoEl,0,0,outW,outH);
+          const id=ctx.getImageData(0,0,outW,outH);
+          encoder.addFrame(id.data);
+          done++;
+          const pct=Math.round(done/totalFrames*90);
+          convertBar.style.width=pct+'%';
+          convertLabel.textContent=`Encoding frame ${done}/${totalFrames}…`;
+          res();
+        };
+        videoEl.onerror=()=>rej(new Error('Seek failed'));
+      });
+      await sleep(0); // yield to UI
+    }
+
+    convertLabel.textContent='Building GIF…';
+    convertBar.style.width='95%';
+    await sleep(20);
+
+    const gifData=encoder.finish();
+    const blob=new Blob([gifData],{type:'image/gif'});
+    const url=URL.createObjectURL(blob);
+
+    convertBar.style.width='100%';
+    convertLabel.textContent='Done!';
+
+    document.getElementById('convert-preview-img').src=url;
+    document.getElementById('convert-size').textContent=fmtSize(gifData.length);
+    document.getElementById('convert-dims').textContent=`${outW}×${outH}`;
+    document.getElementById('convert-frames').textContent=totalFrames;
+    document.getElementById('convert-dl').href=url;
+    convertResult.classList.add('show');
+
+  }catch(err){
+    convertError.textContent='Error: '+err.message;
+    convertError.classList.add('show');
+    convertBar.style.width='0%';
+    convertLabel.textContent='';
+  }
+
+  convertBtn.disabled=false;
+});
+
+// ──────────────────────────────────────────────
+// GIF COMPRESSOR
+// ──────────────────────────────────────────────
+let gifFile=null, gifOrigSize=0;
+const gifInput=document.getElementById('gif-input');
+const compressBtn=document.getElementById('compress-btn');
+const compressProgress=document.getElementById('compress-progress');
+const compressBar=document.getElementById('compress-bar');
+const compressLabel=document.getElementById('compress-label');
+const compressResult=document.getElementById('compress-result');
+const compressError=document.getElementById('compress-error');
+
+gifInput.addEventListener('change',handleGifFile);
+document.getElementById('gif-dropzone').addEventListener('drop',e=>{
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type==='image/gif')handleGifFile(null,f);
+});
+
+function handleGifFile(e,file){
+  gifFile=file||e.target.files[0];
+  if(!gifFile)return;
+  gifOrigSize=gifFile.size;
+  compressBtn.disabled=false;
+  compressResult.classList.remove('show');
+  compressError.classList.remove('show');
+}
+
+compressBtn.addEventListener('click',async()=>{
+  if(!gifFile)return;
+  compressBtn.disabled=true;
+  compressProgress.classList.add('show');
+  compressResult.classList.remove('show');
+  compressError.classList.remove('show');
+
+  try{
+    const skipN=parseInt(skip.value);
+    const scaleP=parseInt(scale.value)/100;
+    const maxColors=parseInt(document.getElementById('compress-colors').value);
+    const fpsCap=parseInt(document.getElementById('compress-fps').value)||0;
+
+    compressLabel.textContent='Reading GIF…';
+    compressBar.style.width='5%';
+    await sleep(20);
+
+    const buf=await gifFile.arrayBuffer();
+    const decoder=new GIFDecoder();
+    let gif;
+    try{ gif=decoder.decode(buf); }
+    catch(e){ throw new Error('Could not decode GIF. Is it a valid GIF89a file?'); }
+
+    const srcW=gif.width, srcH=gif.height;
+    const outW=Math.round(srcW*scaleP);
+    const outH=Math.round(srcH*scaleP);
+
+    compressLabel.textContent=`Decoded ${gif.frames.length} frames. Processing…`;
+    compressBar.style.width='20%';
+    await sleep(20);
+
+    // Filter frames
+    let frames=gif.frames.filter((_,i)=>i%skipN===0);
+
+    // FPS cap
+    if(fpsCap>0){
+      const minDelay=Math.round(1000/fpsCap);
+      frames=frames.map(f=>({...f,delay:Math.max(f.delay,minDelay)}));
+    }
+
+    if(frames.length===0)throw new Error('All frames removed. Lower the skip factor.');
+
+    const canvas=document.createElement('canvas');
+    canvas.width=outW; canvas.height=outH;
+    const ctx=canvas.getContext('2d');
+
+    // Accumulate composed frames (GIF disposal)
+    const off=document.createElement('canvas');
+    off.width=srcW; off.height=srcH;
+    const offCtx=off.getContext('2d');
+
+    const encoder=new GIFEncoder(outW,outH);
+    encoder.setRepeat(0);
+
+    // Quality based on color count
+    const qualMap={256:1,128:3,64:6,32:10,16:15};
+    encoder.setQuality(qualMap[maxColors]||1);
+
+    let done=0;
+    for(const f of frames){
+      // Compose frame onto background canvas
+      const id=new ImageData(f.pixels,f.width,f.height);
+      offCtx.putImageData(id,f.x,f.y);
+      // Scale to output size
+      ctx.drawImage(off,0,0,srcW,srcH,0,0,outW,outH);
+      const scaled=ctx.getImageData(0,0,outW,outH);
+      encoder.setDelay(f.delay*(skipN)); // adjust delay for skipped frames
+      encoder.addFrame(scaled.data);
+      done++;
+      const pct=20+Math.round(done/frames.length*75);
+      compressBar.style.width=pct+'%';
+      compressLabel.textContent=`Re-encoding frame ${done}/${frames.length}…`;
+      await sleep(0);
+    }
+
+    compressLabel.textContent='Building compressed GIF…';
+    compressBar.style.width='97%';
+    await sleep(20);
+
+    const gifData=encoder.finish();
+    const blob=new Blob([gifData],{type:'image/gif'});
+    const url=URL.createObjectURL(blob);
+
+    compressBar.style.width='100%';
+    compressLabel.textContent='Done!';
+
+    const saved=((gifOrigSize-gifData.length)/gifOrigSize*100).toFixed(1);
+    document.getElementById('gif-result-preview').src=url;
+    document.getElementById('orig-size').textContent=fmtSize(gifOrigSize);
+    document.getElementById('comp-size').textContent=fmtSize(gifData.length);
+    document.getElementById('saved-pct').textContent=(gifData.length<gifOrigSize?'-':'+')+''+Math.abs(saved)+'%';
+    document.getElementById('comp-frames').textContent=frames.length+' / '+gif.frames.length;
+    document.getElementById('compress-dl').href=url;
+    compressResult.classList.add('show');
+
+  }catch(err){
+    compressError.textContent='Error: '+err.message;
+    compressError.classList.add('show');
+    compressBar.style.width='0%';
+    compressLabel.textContent='';
+  }
+
+  compressBtn.disabled=false;
+});
+</script>
+</body>
+</html>
